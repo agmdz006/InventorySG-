@@ -65,3 +65,64 @@ def crear_usuario():
             "error": "Hubo un problema al guardar.", 
             "detalle_tecnico": str(e)
         }), 400
+
+
+
+
+#===========ENDPOINTS PARA CLIENTES==============================#
+
+#------Endpoint para crear un cliente-------#
+@auth_bp.route('/api/clientes', methods=['POST']) #ruta del endpoint para mandar un cliente a la base de datos
+def crear_cliente():
+   #Recibimos los datos que nos envía el cliente
+   datos = request.get_json()
+   #validamos que vengan los campos
+   if not datos or 'nombre' not in datos or 'identificacion' not in datos or 'telefono' not in datos or 'correo' not in datos:
+    return jsonify({"error", "faltan campos que son necesarios como: nombre, identificacion, telefono o correo"}), 400
+
+
+   #instanciamos el cliente nuevo
+   nuevo_cliente = Cliente(nombre=datos['nombre'], identificacion=datos['identificacion'], telefono=datos['telefono'], correo=datos['correo'])
+
+    #usamos un try para intentar mandar la información y en caso de obtener un error, no crashear el programa
+   try:
+        db.session.add(nuevo_cliente)
+        db.session.commit()
+
+
+        return jsonify({
+            "mensaje": "cliente creado con éxito", 
+            "nombre": nuevo_cliente.nombre,
+            "identificacion": nuevo_cliente.identificacion,
+            "telefono": nuevo_cliente.telefono }), 201
+
+
+
+   except Exception as e:
+        db.session.rollback()
+        print(f"'Error': {str(e)}")
+        return jsonify({"error": "Sucedió un error al crear el cliente",
+                        "detalle del error": {str(e)}}), 400
+
+
+
+#------Endpoint para obtener información de clientes------#
+@auth_bp.route('/api/clientes', methods=['GET'])
+def get_cliente():
+    cliente_db = Cliente.query.all()
+
+    lista_Clientes = []
+    for cliente in cliente_db:
+        lista_Clientes.append({
+            "id": cliente.id,
+            "nombre": cliente.nombre,
+            "identificacion": cliente.identificacion,
+            "telefono": cliente.telefono,
+            "correo": cliente.correo
+        })
+
+    return jsonify(lista_Clientes), 200
+
+
+
+
